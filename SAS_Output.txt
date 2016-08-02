@@ -1,0 +1,83 @@
+libname BcampLib 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4';
+
+/*Entering Data manually into SAS*/
+data BcampLib.Product;
+ input  @01 Product_ID 3.
+		@04 Price 4. 
+		@09 MDemand 4.
+		@14 Country $3.
+		@18 ExpireDate date7.;
+ format ExpireDate date7.;
+ datalines;
+ 1  54  5232 USA 01JAN17
+ 2  40  6362 IRN 03FEB19
+ 3  110 2023 JPN 03MAR17
+ 4  67  4553 RUS 03DEC19
+ 5  45  5432 RUS 03NOV18
+ 6  67  4532 KSA 03FEB17
+ 7  23  8454 JPN 03JAN18
+ 8  234 643  AUS 03APR17
+ 9  444 743  IRN 03FEB17
+ 10 223 2323 USA 03MAR16
+;
+proc print data = BcampLib.Product ; 
+run;
+
+/*Imposing Formats into Data while Printing*/
+PROC PRINT DATA=BcampLib.Product;
+     VAR Product_ID Price MDemand;
+     FORMAT Price DOLLAR 6.2;
+RUN;                 
+
+/*Reading Data from outside text*/
+filename LibAdd 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer.txt';
+data BcampLib.Customer;
+  infile LibAdd;
+  input Customer_ID Product_ID Sex $ Age LoyYear Total_Purchase;
+title 'BootcampLib.Customer Table';
+
+/*How to export the output to a pdf file */
+title "Example for ODS";
+footnote "Customer Dataset";
+options nodate; 
+ODS PDF file= 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer_PDF.pdf';
+proc print data = BcampLib.Customer ;
+run;
+ODS PDF close;
+
+/*How to export using Proc export*/
+proc export data = BcampLib.Customer outfile = 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer_Csv.csv' dbms = csv;
+run;
+
+/*Export Dataset using data step*/
+data _null_;
+set BcampLib.Customer;
+/*file print;*/
+file 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer_Text.txt';
+put @1 Customer_ID 2. 
+	@4 Product_ID 1.
+	@6 Sex $1.
+	@8 Age 2.;
+run;
+
+/*Export Dataset using data step*/
+data _null_;
+set BcampLib.Customer;
+/*file print;*/
+file 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer_Text.csv' dlm = ',';
+put Customer_ID 2. 
+	Product_ID 1.
+	Sex $1.
+	Age 2.;
+run;
+
+/*Reading the text file in a more customized way - Line Hold Specifiers using @ */
+filename LibAdd 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer.txt';
+data BcampLib.Customer_Cus;
+  infile LibAdd;
+  input @3 Product_ID @;
+  if Product_ID = 4;
+  input Sex $ Age;
+title 'BootcampLib.Customer Customized Table';
+
+Proc print data = BcampLib.Customer_Cus; run; 

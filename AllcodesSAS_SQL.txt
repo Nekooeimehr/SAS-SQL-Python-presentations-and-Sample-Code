@@ -1,0 +1,214 @@
+libname BcampLib 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4';
+
+/*Entering Data manually into SAS*/
+data BcampLib.Product;
+ input  @01 Product_ID 3.
+		@04 Price 4. 
+		@09 MDemand 4.
+		@14 Country $3.
+		@18 ExpireDate date7.;
+ format ExpireDate date7.;
+ datalines;
+ 1  54  5232 USA 01JAN17
+ 2  40  6362 IRN 03FEB19
+ 3  110 2023 JPN 03MAR17
+ 4  67  4553 RUS 03DEC19
+ 5  45  5432 RUS 03NOV18
+ 6  67  4532 KSA 03FEB17
+ 7  23  8454 JPN 03JAN18
+ 8  234 643  AUS 03APR17
+ 9  444 743  IRN 03FEB17
+ 10 223 2323 USA 03MAR16
+;
+proc print data = BcampLib.Product ; 
+run;
+
+/*Imposing Formats into Data while Printing*/
+PROC PRINT DATA=BcampLib.Product;
+     VAR Product_ID Price MDemand;
+     FORMAT Price DOLLAR 6.2;
+RUN;                 
+
+/*Reading Data from outside text*/
+filename LibAdd 'C:\Users\nekooeimehr\Documents\My SAS Files\9.4\Customer.txt';
+data BcampLib.Customer;
+  infile LibAdd;
+  input Customer_ID Product_ID Sex $ Age LoyYear Total_Purchase;
+title 'BootcampLib.Customer Table';
+proc print data = BcampLib.Customer ; 
+proc contents data = BcampLib.Customer ; 
+run; 
+
+/*Defining Customized Format*/
+PROC FORMAT;
+     VALUE AgeFmt
+                   low-<30='Young'
+            	   30-45='Middle Age'
+            	   45<-high='Old';  
+RUN;
+
+/*Applying the defined Format*/
+data BcampLib.Customer_Fmt;
+     SET BcampLib.Customer;
+     FORMAT Age AgeFmt.;
+proc print data = BcampLib.Customer_Fmt ; 
+run; 
+
+/*If Statements*/
+data BcampLib.Customer_IF;
+     SET BcampLib.Customer;
+	 if age <= 30 then agegroup=1;
+	 else if 30 < age <= 45 then agegroup=2;
+	 else if age > 45 then agegroup=3;
+proc print data = BcampLib.Customer_IF ; 
+run; 
+
+/*Merging Two Datasets*/
+data BcampLib.Customer_Comb;
+     Merge BcampLib.Customer BcampLib.Customer_IF;
+proc print data = BcampLib.Customer_Comb ; 
+run; 
+
+/*An example on how to use Loops*/
+Data loopEx;
+Do i = 1 to 10 by 2;
+	Do j = 5 to 25 by 5;
+		Product = i*j+X;
+		output;
+	end;
+end;
+title 'Bootcamp Loop Example';
+proc print data = loopEx; 
+var Product; 
+run;
+
+/*Macro to Transform the Inputs*/
+%macro EX_transform(X,Y,Z);
+	JoinYear = &X - &Y;
+	AvgPurchase = &Z/&Y;
+%mend EX_transform;
+
+data BcampLib.Customer_Macro;
+	 Set BcampLib.Customer;
+     %EX_transform(Age,LoyYear,Total_Purchase)
+proc print data = BcampLib.Customer_Macro ; 
+run;
+
+
+/*Test Proc Sort*/
+proc sort data=BcampLib.Customer ; by Age ; 
+Proc print;
+run; 
+
+proc sort data=BcampLib.Customer out=BcampLib.Customer_Sorted ; by Total_Purchase; 
+Proc print;
+run;  
+
+proc sort data=BcampLib.Customer out=BcampLib.Customer_Sorted; by descending Age ; run ; 
+
+proc sort data=BcampLib.Customer out=BcampLib.Customer_Sorted noduplicates; by Product_ID ; run ;
+
+
+
+proc sql;
+   create table BcampLib.Order
+       (Order_ID int,
+        Customer_ID int,
+		Order_time num format=date7.,
+        Ordered_Quantity num);
+
+insert into BcampLib.Order
+    values(1,1,'26JUN14'd,123)
+    values(2,3,'26JAN15'd,24)
+    values(3,7,'05NOV15'd,245)
+	values(4,6,'30NOV12'd,234)
+    values(5,10,'07OCT14'd,35)
+	values(6,2,'15APR14'd,453)
+	values(7,3,'23DEC15'd,23)
+	values(8,6,'30JAN16'd,54);
+
+title 'BootcampLib.Order Table';
+
+select *
+   from BcampLib.Order;
+
+proc print; run;
+
+PROC SQL;
+  SELECT Order_ID, Order_time
+  FROM BcampLib.Order; 
+QUIT;
+
+PROC SQL;
+  SELECT Order_ID, Order_time
+  FROM BcampLib.Order
+  WHERE Ordered_Quantity > 150; 
+QUIT;
+
+PROC SQL;
+  SELECT Order_ID, Customer_ID, Order_time
+  FROM BcampLib.Order
+  WHERE Ordered_Quantity > 100
+  Order by Customer_ID; 
+QUIT;
+
+PROC SQL;
+  SELECT Order_ID, Customer_ID, Order_time
+  FROM BcampLib.Order
+  WHERE Ordered_Quantity > 100
+  Order by Customer_ID Descending; 
+QUIT;
+
+PROC SQL;
+  SELECT Distinct Customer_ID
+  FROM BcampLib.Order
+  order by Customer_ID;
+QUIT;
+
+PROC SQL;
+  SELECT count(Distinct Ordered_Quantity)
+  FROM BcampLib.Order
+  WHERE Ordered_Quantity > 150; 
+QUIT;
+
+PROC SQL;
+  SELECT sum(Total_Purchase/LoyYear) as TotAvgPurchase
+  FROM BcampLib.Customer
+  WHERE Sex = 'M'; 
+QUIT;
+
+PROC SQL;
+  SELECT Sex, sum(Total_Purchase/LoyYear) as TotAvgPurchase
+  FROM BcampLib.Customer
+  Group by Sex; 
+QUIT;
+
+PROC SQL;
+  SELECT Sex, sum(Total_Purchase/LoyYear) as TotAvgPurchase
+  FROM BcampLib.Customer
+  Where Age > 40
+  Group by Sex
+  Having sum(Total_Purchase/LoyYear) > 110; 
+QUIT;
+
+PROC SQL;
+  SELECT Order_ID, Order.Customer_ID, Total_Purchase, LoyYear, Sex 
+  FROM BcampLib.Customer
+  RIGHT JOIN BcampLib.Order
+  ON Order.Customer_ID = Customer.Customer_ID 
+  ORDER BY Order_ID;
+QUIT;
+
+
+
+PROC SQL;
+  SELECT *,
+   CASE
+	WHEN Ordered_Quantity le 100 THEN 1
+    WHEN 100 lt Ordered_Quantity le 200 THEN 2
+    WHEN Ordered_Quantity gt 200 THEN 3
+    ELSE .
+   END
+  AS Quant_Cat format=1.
+  FROM BcampLib.Order; 
+QUIT; 

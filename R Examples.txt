@@ -1,0 +1,39 @@
+ReadInteger<-function()
+{
+  n <- readline(prompt="Enter a number please :")
+  return(as.integer(n))
+}
+
+print(ReadInteger())
+
+ReadInt2<-function(){
+  n<-readline(prompt="Enter:")
+  return(as.integer(n))
+}
+
+DesNumber <- round(runif(1)*100,0)
+flag = 0
+while (flag==0){
+  Guess <- ReadInt2()
+  if (Guess == DesNumber){
+    cat("Congrats", Guess, "is right")
+    flag=1}
+  else if (Guess<DesNumber){
+    cat("Guess a larger num")}
+  else if (Guess>DesNumber){
+    cat("Guess a smaller number")}
+} 
+
+
+test <- function(Letsee){
+  if (Letsee==3)
+    cat("hello")
+  else if (Letsee==4)
+    cat("bye")
+    cat("come")
+}
+
+test(4)
+
+smallestIndex = min(tbl$V6)
+tbl[tbl$V6==smallestIndex,]
